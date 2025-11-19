@@ -91,7 +91,12 @@ class QuantumReservoir:
         return np.array(features)
     
     def _measure_pauli_x(self, state, qubit_idx):
-        return self #??
+        n = self.n_qubits
+        expval = 0.0
+        for i in range(2**n):
+            j = i ^ (1 << qubit_idx)  # Flip bit en posición qubit_idx
+            expval += np.real(np.conj(state[i]) * state[j])
+        return expval
     
     def _measure_pauli_y(self, state, qubit_idx):
         return self #??
