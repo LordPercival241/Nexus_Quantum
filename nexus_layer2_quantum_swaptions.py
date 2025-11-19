@@ -313,6 +313,48 @@ def train_and_predict_qrc(data_path, output_path='nexus_predictions.csv'):
     
     # 5. GUARDAR RESULTADOS
     print("\nGuardando predicciones finales...")
-   
+    try:
+        # Cargar DF original 
+        df_original = pd.read_csv(data_path, index_col='Date', parse_dates=True) 
+        df_final = df_original.copy()
+        print(f" DF Original cargado con shape: {df_final.shape}")
+
+    except Exception as e:
+        print(f" ERROR: No se pudo cargar el DF original para actualizar: {e}")
+        # Si falla se usa método simple de guardar solo las predicciones:
+        if len(all_predictions) > 0:
+            all_pred_array = np.vstack(all_predictions)
+            pred_df = pd.DataFrame(all_pred_array, columns=feature_cols)
+            pred_df.to_csv(output_path, index=False)
+            print(f"Guardado de emergencia: {output_path}")
+        return model, None
     
-    return model, all_pred_array
+    # 5b. IMPUTAR VALORES FALTANTES (Missing)
+    if X_missing is not None and len(X_missing) > 0:
+        print(" 1. Imputando valores faltantes en el DF original...")
+        # .loc para actualizar las filas y columnas correspondientes
+        for i, idx in enumerate(idx_missing):
+            df_final.loc[df_final.index[idx], feature_cols] = missing_pred[i]
+        
+    # 5c. AÑADIR EL FORECAST FUTURO
+    if X_future is not None and len(future_predictions) > 0:
+        print(" 2. Añadiendo el forecast de 2 semanas al final del DF...")
+        
+        # Crear un DF temporal para las predicciones futuras con sus fechas
+        future_df = pd.DataFrame(
+            future_predictions, 
+            index=dates_future, 
+            columns=feature_cols
+        )
+        # Asegurarse de que el índice se llame 'Date'
+        future_df.index.name = 'Date' 
+
+        # Concatenar el DF histórico con el DF futuro
+        df_final = pd.concat([df_final, future_df])
+
+    # 5d. GUARDAR EL RESULTADO FINAL CONTEXTUALIZADO
+    print(f"Total de filas en el DF final (Histórico + Forecast): {df_final.shape[0]}")
+    df_final.to_csv(output_path, index=True) # index=True para guardar la columna 'Date'
+    print(f"Archivo final guardado: {output_path}")
+
+    return model, df_final
