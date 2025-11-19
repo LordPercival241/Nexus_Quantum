@@ -257,3 +257,62 @@ def save_predictions(df, predictions, indices, feature_cols, output_path):
         df_output.loc[idx, feature_cols] = predictions[i]
     df_output.to_csv(output_path, index=False)
     print(f"Predicciones guardadas en: {output_path}")
+
+# ============================================================================
+# MÓDULO 4: MAIN 
+# Cargar, Entrenar QR en data historica, predecir, forecast a 2 semanas, guardar
+# ============================================================================
+
+def train_and_predict_qrc(data_path, output_path='nexus_predictions.csv'):
+    print("="*70)
+    print("QUANTUM SWAPTION FORECASTER")
+    print("Qiskit Fall Fest Lima 2025 - Track 2")
+    print("="*70)
+    
+    # 1. CARGAR DATOS
+    X_train, y_train, X_missing, idx_missing, X_future, dates_future, feature_cols = \
+        load_and_prepare_data(data_path)
+    
+    # 2. ENTRENAR MODELO
+    model = QRCSwaptionForecaster(
+        n_qubits=6, 
+        entanglement_depth=2,
+        alpha=1.0  # Regularización Ridge
+    )
+    model.fit(X_train, y_train)
+    
+    # 3. PREDECIR VALORES FALTANTES (si existen)
+    all_predictions = []
+    all_indices = []
+    
+    if X_missing is not None and len(X_missing) > 0:
+        print("\nPrediciendo valores faltantes")
+        missing_pred = model.predict(X_missing)
+        all_predictions.append(missing_pred)
+        all_indices.extend(idx_missing)
+    
+    # 4. FORECAST FUTURO (2 semanas)
+    if X_future is not None: # Forecast
+        print("\nPrediciendo 2 semanas hacia el futuro...")
+        
+        # Forecasting iterativo: usar predicción anterior como input
+        future_predictions = []
+        current_state = X_future[0:1]  # Última observación como seed
+        
+        for i in range(len(X_future)):
+            pred = model.predict(current_state)
+            future_predictions.append(pred[0])
+            current_state = pred  # Feed prediction como next input
+            
+            if dates_future is not None:
+                print(f"Día {i+1} ({dates_future[i]}): predicción completa")
+        
+        future_predictions = np.array(future_predictions)
+        all_predictions.append(future_predictions)
+        all_indices.extend([i for i in range(len(dates_future))])  # Indices relativos
+    
+    # 5. GUARDAR RESULTADOS
+    print("\nGuardando predicciones finales...")
+   
+    
+    return model, all_pred_array
