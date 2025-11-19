@@ -358,3 +358,21 @@ def train_and_predict_qrc(data_path, output_path='nexus_predictions.csv'):
     print(f"Archivo final guardado: {output_path}")
 
     return model, df_final
+
+
+# ============================================================================
+# PUNTO DE ENTRADA
+# ============================================================================
+
+if __name__ == "__main__":
+    import sys
+    
+    if len(sys.argv) < 2:
+        print("Error: Debes proporcionar la ruta al archivo CSV")
+        print("Uso: python nexus_layer2_quantum_swaptions.py <archivo.csv>")
+        sys.exit(1)
+    
+    data_file = sys.argv[1]
+    model, predictions = train_and_predict_qrc(data_file)
+    
+    print("\nModelo QRC entrenado y listo para integración")
