@@ -99,9 +99,16 @@ class QuantumReservoir:
         return expval
     
     def _measure_pauli_y(self, state, qubit_idx):
-        return self #??
+        n = self.n_qubits
+        expval = 0.0
+        for i in range(2**n):
+            j = i ^ (1 << qubit_idx)
+            bit_val = (i >> qubit_idx) & 1
+            sign = 1 if bit_val == 0 else -1
+            expval += sign * np.imag(np.conj(state[i]) * state[j])
+        return expval
     
     def _measure_pauli_z(self, state, qubit_idx):
-        return self #??
+        return self 
     
     # def transform_batch(self, X_matrix):
