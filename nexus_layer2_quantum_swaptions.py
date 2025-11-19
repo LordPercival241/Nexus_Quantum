@@ -182,7 +182,7 @@ class QRCSwaptionForecaster:
 
 def load_and_prepare_data(filepath):
     print("\n[Data] Cargando dataset...")
-    df = pd.read_csv(filepath)
+    df = pd.read_csv(filepath, decimal=',')
     
     # Separar columnas de features vs metadata
     feature_cols = [col for col in df.columns if 'Tenor' in col]
