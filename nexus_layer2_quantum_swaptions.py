@@ -167,3 +167,10 @@ class QRCSwaptionForecaster:
         
         print(f"Training completado - MSE: {mse:.6f}, MAE: {mae:.6f}")
         return self
+    
+    # Predicción de valores 
+    def predict(self, X_test):
+        X_scaled = self.scaler_X.transform(X_test)
+        X_quantum = self.reservoir.transform_batch(X_scaled)
+        y_pred_scaled = self.readout.predict(X_quantum)
+        return self.scaler_y.inverse_transform(y_pred_scaled)
