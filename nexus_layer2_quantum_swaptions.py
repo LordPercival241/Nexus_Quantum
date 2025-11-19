@@ -117,4 +117,13 @@ class QuantumReservoir:
             expval += sign * np.abs(state[i])**2
         return expval
     
-    # def transform_batch(self, X_matrix):
+    # 224 features a 18 features cuánticas
+    def transform_batch(self, X_matrix):
+        print(f" Procesando {len(X_matrix)} samples por el reservoir cuántico...")
+        features_list = []
+        for i, x in enumerate(X_matrix):
+            if i % 50 == 0:
+                print(f"      Sample {i}/{len(X_matrix)}", end='\r')
+            features_list.append(self.transform_single(x))
+        print()  
+        return np.array(features_list)
