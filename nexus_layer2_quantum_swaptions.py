@@ -109,6 +109,12 @@ class QuantumReservoir:
         return expval
     
     def _measure_pauli_z(self, state, qubit_idx):
-        return self 
+        n = self.n_qubits
+        expval = 0.0
+        for i in range(2**n):
+            bit_val = (i >> qubit_idx) & 1
+            sign = 1 if bit_val == 0 else -1
+            expval += sign * np.abs(state[i])**2
+        return expval
     
     # def transform_batch(self, X_matrix):
