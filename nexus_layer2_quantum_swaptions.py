@@ -127,3 +127,22 @@ class QuantumReservoir:
             features_list.append(self.transform_single(x))
         print()  
         return np.array(features_list)
+    
+# ============================================================================
+# MÓDULO 2: QRC FORECASTER (Precios de Swaptions)
+# 1. QR transforma inputs al espacio de Hilbert
+# 2. Ridge Regression en features cuánticas
+# ============================================================================
+class QRCSwaptionForecaster:
+    
+    def __init__(self, n_qubits=6, entanglement_depth=2, alpha=1.0):
+        self.reservoir = QuantumReservoir(n_qubits, entanglement_depth)
+        self.readout = Ridge(alpha=alpha)
+        self.scaler_X = StandardScaler()
+        self.scaler_y = StandardScaler()
+        
+        print(f"QRC Forecaster listo par entrenar")
+        print(f"Regularización Ridge: α={alpha}")
+    
+ 
+        return self
