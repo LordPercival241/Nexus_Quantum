@@ -174,3 +174,86 @@ class QRCSwaptionForecaster:
         X_quantum = self.reservoir.transform_batch(X_scaled)
         y_pred_scaled = self.readout.predict(X_quantum)
         return self.scaler_y.inverse_transform(y_pred_scaled)
+
+# ============================================================================
+# MÓDULO 3: DATA PIPELINE
+# Carga de CSV dado y preparación de data para Q Reservoir
+# ============================================================================
+
+def load_and_prepare_data(filepath):
+    print("\n[Data] Cargando dataset...")
+    df = pd.read_csv(filepath)
+    
+    # Separar columnas de features vs metadata
+    feature_cols = [col for col in df.columns if 'Tenor' in col]
+    n_features = len(feature_cols)
+    print(f"   Features encontradas: {n_features}")
+    
+    # Identificar filas completas, con valores faltantes, y futuras
+    complete_rows = []
+    missing_rows = []
+    future_rows = []
+    
+    for idx, row in df.iterrows():
+        if 'Date' in df.columns:
+            row_type = row.get('Type', 'Complete')  # En sample hay columna Type
+        else:
+            row_type = 'Complete'  # En dataset final no hay Type
+        
+        # Checar si tiene NAs
+        has_na = row[feature_cols].isna().any()
+        all_na = row[feature_cols].isna().all()
+        
+        if all_na:
+            future_rows.append(idx)
+        elif has_na:
+            missing_rows.append(idx)
+        else:
+            complete_rows.append(idx)
+    
+    print(f"Filas completas: {len(complete_rows)}")
+    print(f"Filas con valores faltantes: {len(missing_rows)}")
+    print(f"Filas futuras (all NA): {len(future_rows)}")
+    
+    # Preparar X_train, y_train (usando filas completas)
+    # Estrategia: usar fila t para predecir fila t+1
+    X_train = []
+    y_train = []
+    
+    for i in range(len(complete_rows) - 1):
+        idx_current = complete_rows[i]
+        idx_next = complete_rows[i + 1]
+        
+        X_train.append(df.loc[idx_current, feature_cols].values.astype(float))
+        y_train.append(df.loc[idx_next, feature_cols].values.astype(float))
+    
+    X_train = np.array(X_train)
+    y_train = np.array(y_train)
+    
+    # Preparar X_missing (filas con algunos valores para imputar)
+    X_missing = []
+    for idx in missing_rows:
+        row_vals = df.loc[idx, feature_cols].values
+        # Reemplazar NAs con 0 temporalmente
+        row_vals = np.where(pd.isna(row_vals), 0, row_vals).astype(float)
+        X_missing.append(row_vals)
+    X_missing = np.array(X_missing) if len(X_missing) > 0 else None
+    
+    # Preparar X_future (usar última fila completa como seed)
+    if len(future_rows) > 0:
+        last_complete = df.loc[complete_rows[-1], feature_cols].values.astype(float)
+        X_future = np.tile(last_complete, (len(future_rows), 1))
+        dates_future = df.loc[future_rows, 'Date'].values if 'Date' in df.columns else None
+    else:
+        X_future = None
+        dates_future = None
+    
+    return X_train, y_train, X_missing, missing_rows, X_future, dates_future, feature_cols
+
+# Guardar predicciones en el dataframe
+def save_predictions(df, predictions, indices, feature_cols, output_path):
+    df_output = df.copy()
+    for i, idx in enumerate(indices):
+        df_output.loc[idx, feature_cols] = predictions[i]
+    df_output.to_csv(output_path, index=False)
+    print(f"Predicciones guardadas en: {output_path}")
