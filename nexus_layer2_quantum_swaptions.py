@@ -144,5 +144,26 @@ class QRCSwaptionForecaster:
         print(f"QRC Forecaster listo par entrenar")
         print(f"Regularización Ridge: α={alpha}")
     
- 
+    #Entrenamiento del modelo con Features históricas (x) y targets (features un paso adelante)
+    def fit(self, X_train, y_train):
+        print("\n Iniciando entrenamiento")
+        
+        # 1. Normalizar inputs
+        X_scaled = self.scaler_X.fit_transform(X_train)
+        y_scaled = self.scaler_y.fit_transform(y_train)
+        
+        # 2. Quantum Reservoir Transform
+        X_quantum = self.reservoir.transform_batch(X_scaled)
+        
+        # 3. Entrenar capa de readout (Ridge Regression)
+        print("Entrenando capa de readout clásica...")
+        self.readout.fit(X_quantum, y_scaled)
+        
+        # Calcular error de training
+        y_pred_scaled = self.readout.predict(X_quantum)
+        y_pred = self.scaler_y.inverse_transform(y_pred_scaled)
+        mse = mean_squared_error(y_train, y_pred)
+        mae = mean_absolute_error(y_train, y_pred)
+        
+        print(f"Training completado - MSE: {mse:.6f}, MAE: {mae:.6f}")
         return self
