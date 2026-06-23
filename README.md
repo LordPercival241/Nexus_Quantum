@@ -1,1 +1,1 @@
-Hola mundo!
+Proyecto desarrollado enfocado en las predicciones financieras de diferentes mercados usando datos, un modelo de IA y con una arquitectura para usar propiedades de la computación cuantica un analisis masivo de datos, para encontrar oportunidades de inversión.
