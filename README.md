@@ -11,7 +11,7 @@ flowchart TD
     end
 
     subgraph "2. Infraestructura Tether WDK Gasless (Pista 2)"
-        D --> E["Pimlico Bundler RPC en Arbitrum Sepolia 421614"]
+        D ->  E["Pimlico Bundler RPC en Arbitrum Sepolia 421614"]
         E --> F["Paymaster Contract: Liquidación de Gas en USDt / Patrocinio"]
         F --> G["EntryPoint 0.7 Contract"]
     end
